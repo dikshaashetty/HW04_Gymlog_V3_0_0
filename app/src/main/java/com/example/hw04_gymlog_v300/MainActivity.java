@@ -1,20 +1,18 @@
 package com.example.hw04_gymlog_v300;
 
-import android.os.Bundle;
-import android.text.method.ScrollingMovementMethod;
-import android.widget.Toast;
-
 import androidx.appcompat.app.AppCompatActivity;
+
+import android.os.Bundle;
+import android.text.TextUtils;
 
 import com.example.hw04_gymlog_v300.databinding.ActivityMainBinding;
 
-import java.util.List;
-import java.util.Locale;
+import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
 
     private ActivityMainBinding binding;
-    private GymLogRepository repo;
+    private GymLogRepository repository;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -22,57 +20,59 @@ public class MainActivity extends AppCompatActivity {
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        repo = new GymLogRepository(getApplication());
-
-        // make the gray log box scroll
-        binding.logDisplayTextView.setMovementMethod(new ScrollingMovementMethod());
-
-        // show any logs already saved
-        refreshDisplayFromDb();
+        repository = GymLogRepository.getRepository(getApplication());
 
         binding.logButton.setOnClickListener(v -> {
-            String exercise = binding.exerciseInput.getText().toString().trim();
-            String wStr = binding.weightInput.getText().toString().trim();
-            String rStr = binding.repsInput.getText().toString().trim();
-
-            double weight = 0.0;
-            int reps = 0;
-            try { weight = Double.parseDouble(wStr); } catch (NumberFormatException ignored) {}
-            try { reps   = Integer.parseInt(rStr); }  catch (NumberFormatException ignored) {}
-
-            GymLog log = new GymLog(exercise, weight, reps);
-            repo.insert(log);              // save to Room
-            prependToDisplay(log);         // show immediately
-
-            // clear inputs
-            binding.exerciseInput.getText().clear();
-            binding.weightInput.getText().clear();
-            binding.repsInput.getText().clear();
-
-            Toast.makeText(this, "Logged!", Toast.LENGTH_SHORT).show();
+            insertGymLogRecord();
+            // Pull from DB after insert (note insert is async; simple apps can just refresh)
+            updateDisplay();
         });
+
+        // initial load
+        updateDisplay();
     }
 
-    private void refreshDisplayFromDb() {
-        List<GymLog> logs = repo.getAllBlocking();
-        StringBuilder sb = new StringBuilder();
-        for (GymLog g : logs) {
-            sb.append(formatLog(g)).append("\n\n");
+    private void insertGymLogRecord() {
+        String exercise = safeText(binding.exerciseInput.getText().toString());
+        String wStr     = safeText(binding.weightInput.getText().toString());
+        String rStr     = safeText(binding.repsInput.getText().toString());
+
+        if (TextUtils.isEmpty(exercise) || TextUtils.isEmpty(wStr) || TextUtils.isEmpty(rStr)) {
+            return; // don’t insert empties
         }
-        binding.logDisplayTextView.setText(
-                sb.length() == 0 ? "(Logs will appear here)" : sb.toString().trim()
-        );
+
+        double weight;
+        int reps;
+        try {
+            weight = Double.parseDouble(wStr);
+            reps   = Integer.parseInt(rStr);
+        } catch (NumberFormatException e) {
+            return; // invalid numbers -> skip
+        }
+
+        repository.insert(new GymLog(exercise, weight, reps));
+
+        // (optional) clear inputs
+        // binding.exerciseInput.setText("");
+        // binding.weightInput.setText("");
+        // binding.repsInput.setText("");
     }
 
-    private void prependToDisplay(GymLog g) {
-        String current = binding.logDisplayTextView.getText().toString();
-        String block = formatLog(g) + "\n\n" + (current == null ? "" : current);
-        binding.logDisplayTextView.setText(block.trim());
+    private void updateDisplay() {
+        ArrayList<GymLog> logs = repository.getAllLogs();
+        if (logs.isEmpty()) {
+            binding.logDisplayTextView.setText("Nothing to show. Time to hit the gym!");
+            return;
+        }
+
+        StringBuilder sb = new StringBuilder();
+        for (GymLog log : logs) {
+            sb.append(log.toString());
+        }
+        binding.logDisplayTextView.setText(sb.toString());
     }
 
-    private String formatLog(GymLog g) {
-        return String.format(Locale.getDefault(),
-                "Exercise: %s\nWeight: %.2f\nReps: %d",
-                g.getExercise(), g.getWeight(), g.getReps());
+    private String safeText(String s) {
+        return s == null ? "" : s.trim();
     }
 }

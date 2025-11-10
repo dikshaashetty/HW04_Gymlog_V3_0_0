@@ -10,25 +10,44 @@ import java.util.concurrent.Future;
 
 public class GymLogRepository {
 
+    private static final String TAG = "GymLogRepo";
+    private static GymLogRepository REPOSITORY;
+
     private final GymLogDAO dao;
 
-    public GymLogRepository(Application application) {
+    // make constructor private so we force getRepository()
+    private GymLogRepository(Application application) {
         AppDataBase db = AppDataBase.getDatabase(application);
         dao = db.gymLogDAO();
+    }
+
+    // Singleton getter that runs on the DB executor (video 5)
+    public static GymLogRepository getRepository(Application application) {
+        if (REPOSITORY != null) return REPOSITORY;
+
+        Future<GymLogRepository> future =
+                AppDataBase.databaseWriteExecutor.submit(() -> new GymLogRepository(application));
+
+        try {
+            REPOSITORY = future.get();
+            return REPOSITORY;
+        } catch (ExecutionException | InterruptedException e) {
+            Log.i(TAG, "Problem getting GymLogRepository (thread error).", e);
+            return null;
+        }
     }
 
     public void insert(GymLog log) {
         AppDataBase.databaseWriteExecutor.execute(() -> dao.insert(log));
     }
 
-    // Simple blocking read for demo/homework (fine here)
-    public List<GymLog> getAllBlocking() {
-        Future<List<GymLog>> future = AppDataBase.databaseWriteExecutor.submit(dao::getAll);
+    public ArrayList<GymLog> getAllLogs() {
+        Future<List<GymLog>> future =
+                AppDataBase.databaseWriteExecutor.submit(dao::getAllRecords);
         try {
-            List<GymLog> out = future.get();
-            return out != null ? out : new ArrayList<>();
+            return new ArrayList<>(future.get());
         } catch (ExecutionException | InterruptedException e) {
-            Log.i("GymLogRepo", "Error reading logs", e);
+            Log.i(TAG, "Problem running getAllLogs()", e);
             return new ArrayList<>();
         }
     }
