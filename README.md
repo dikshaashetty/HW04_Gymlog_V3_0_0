@@ -1,4 +1,4 @@
-# GymLog Application
+![img.png](img.png)# GymLog Application
 All of the associated videos are linked [in this Panopto folder](https://csumb.hosted.panopto.com/Panopto/Pages/Sessions/List.aspx#folderID=%22971bdb02-f5c8-4ba7-bedd-b19e0155ba0a%22). It may be necessary to log in to your CSUMB account to view the videos.
 The goal of this project is to work through all the steps necessary to create an app that uses the Room database wrapper for persistence and that allows users to log in. 
 If I am feeling brave I will add in a recycler view too.
