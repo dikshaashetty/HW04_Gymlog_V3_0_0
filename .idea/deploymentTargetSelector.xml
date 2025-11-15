@@ -19,7 +19,7 @@
       <SelectionState runConfigName="insertAndGetUserByUsername()">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
-      <SelectionState runConfigName="ExampleInstrumentedTest">
+      <SelectionState runConfigName="loginAddLogAndVerify()">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
     </selectionStates>
