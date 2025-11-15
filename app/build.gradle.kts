@@ -1,21 +1,21 @@
 plugins {
-    alias(libs.plugins.android.application)
+    id("com.android.application")
 }
 
 android {
     namespace = "com.example.hw04_gymlog_v300"
-    compileSdk = 35
+    compileSdk = 34
+
+    buildFeatures {
+        viewBinding = true
+    }
 
     defaultConfig {
         applicationId = "com.example.hw04_gymlog_v300"
-
-        // NOTE: many samples use minSdk = 24. Keep 34 if that's required for your class/emulator.
-        minSdk = 34
-        targetSdk = 35
-
+        minSdk = 26
+        targetSdk = 34
         versionCode = 1
         versionName = "1.0"
-
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -30,29 +30,35 @@ android {
     }
 
     compileOptions {
-        // Java because our app code is Java
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-
-    // ✅ lets us use ActivityMainBinding, etc.
-    buildFeatures {
-        viewBinding = true
-    }
 }
 
-dependencies {
-    implementation(libs.appcompat)
-    implementation(libs.material)
-    implementation(libs.activity)
-    implementation(libs.constraintlayout)
+    dependencies {
+        implementation(libs.espresso.contrib)
+        val room_version = "2.6.1"
+        implementation("androidx.room:room-runtime:$room_version")
+        annotationProcessor("androidx.room:room-compiler:$room_version")
+        implementation("androidx.recyclerview:recyclerview:1.3.2")
 
-    testImplementation(libs.junit)
-    androidTestImplementation(libs.ext.junit)
-    androidTestImplementation(libs.espresso.core)
+        androidTestImplementation("androidx.arch.core:core-testing:2.2.0")
+        implementation("androidx.appcompat:appcompat:1.7.0")
+        implementation("com.google.android.material:material:1.12.0")
+        implementation("androidx.constraintlayout:constraintlayout:2.1.4")
+        implementation("androidx.recyclerview:recyclerview:1.3.2")
 
-    // ✅ Room (Java): runtime + compiler (annotationProcessor)
-    implementation(libs.room.runtime)
-    annotationProcessor(libs.room.compiler)
-    // (Optional later: room-ktx if you add coroutines or Kotlin code)
+        // Room (Java)
+        implementation("androidx.room:room-runtime:2.6.1")
+        annotationProcessor("androidx.room:room-compiler:2.6.1")
+        testImplementation("androidx.room:room-testing:2.6.1")
+
+        // LiveData (used for the logs list)
+        implementation("androidx.lifecycle:lifecycle-livedata:2.8.5")
+
+        // Tests (optional)
+        testImplementation("junit:junit:4.13.2")
+        testImplementation("androidx.test:core:1.6.1")
+        androidTestImplementation("androidx.test.ext:junit:1.2.1")
+        androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
 }
